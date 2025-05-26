@@ -6,14 +6,14 @@ const { sendContactEmail } = require('../config/sendEmail');
  */
 exports.submitContactForm = async (req, res) => {
   try {
-    const { name, email, phone, company, service, message } = req.body;
+    const { name, email, phone, service, message } = req.body;
 
     // Save to database
     const newContact = await Contact.create({
       name,
       email,
       phone,
-      company,
+     
       service,
       message
     });
@@ -23,7 +23,7 @@ exports.submitContactForm = async (req, res) => {
       name,
       email,
       phone,
-      company,
+     
       service,
       message
     });
@@ -58,7 +58,7 @@ exports.getAllContacts = async (req, res) => {
       searchQuery.$or = [
         { name: { $regex: req.query.search, $options: 'i' } },
         { email: { $regex: req.query.search, $options: 'i' } },
-        { company: { $regex: req.query.search, $options: 'i' } }
+        // { company: { $regex: req.query.search, $options: 'i' } }
       ];
     }
 
@@ -127,7 +127,7 @@ exports.getContactById = async (req, res) => {
  */
 exports.updateContact = async (req, res) => {
   try {
-    const { name, email, phone, company, service, message, status } = req.body;
+    const { name, email, phone, service, message, status } = req.body;
     
     const contact = await Contact.findByIdAndUpdate(
       req.params.id,
@@ -135,7 +135,7 @@ exports.updateContact = async (req, res) => {
         name,
         email,
         phone,
-        company,
+       
         service,
         message,
         status

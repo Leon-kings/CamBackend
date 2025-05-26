@@ -3,7 +3,10 @@ const morgan = require("morgan");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const express = require("express");
-const authRoutes = require('./routes/authRoutes')
+const authRoutes = require('./routes/authRoutes');
+const contactRoutes = require('./routes/contactRoutes');
+const newsletterRoutes = require('./routes/newsletterRoutes');
+const testimonialRoutes = require('./routes/testimonialRoutes');
 
 dotenv.config();
 require("dotenv").config();
@@ -28,6 +31,9 @@ app.get("/", (req, res) => {
 });
 
 app.use("/user", authRoutes);
+app.use("/contact", contactRoutes);
+app.use('/api/newsletter', newsletterRoutes);
+app.use('/api/testimonials', testimonialRoutes);
 //
 
 //
