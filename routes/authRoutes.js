@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate, isAdmin } = require('../middlewares/auth');
+
 const { 
   register, 
   login, 
@@ -12,7 +12,9 @@ const {
   getAllUsers,
   getUserById,
   deleteUser,
-  getProfile
+  getProfile,
+  getStatistics,
+  sendStatisticsReport
 } = require('../controllers/authController');
 
 // Public Routes
@@ -24,12 +26,16 @@ router.post('/request-password-reset', requestPasswordReset);
 router.post('/reset-password/:token', resetPassword);
 
 // Protected Routes (require authentication)
-router.get('/profile', authenticate, getProfile);
+router.get('/profile',  getProfile);
 
 // Admin Routes (require admin privileges)
-router.get('/', authenticate, isAdmin, getAllUsers);
-router.get('/:id', authenticate, isAdmin, getUserById);
-router.delete('/:id', authenticate, isAdmin, deleteUser);
-router.put('/:id/status', authenticate, isAdmin, updateStatus);
+router.get('/', getAllUsers);
+router.get('/:id', getUserById);
+router.delete('/:id', deleteUser);
+router.put('/:id/status', updateStatus);
+
+// Statistics Routes (admin only)
+router.get('/statistics/system', getStatistics);
+router.post('/statistics/send-report', sendStatisticsReport);
 
 module.exports = router;

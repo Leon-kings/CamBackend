@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes');
 const testimonialRoutes = require('./routes/testimonialRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 dotenv.config();
 require("dotenv").config();
@@ -34,6 +35,8 @@ app.use("/user", authRoutes);
 app.use("/contact", contactRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/testimonials', testimonialRoutes);
+app.use('/api', orderRoutes);
 //
 
 //
