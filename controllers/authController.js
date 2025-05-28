@@ -790,26 +790,32 @@ const updateStatus = async (req, res) => {
  */
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().lean(); // Add .lean() for plain JS objects
-    console.log('Raw users from DB:', users.length); // Debug log
-    
-    const mappedUsers = users.map((user) => {
-      const userResponse = getUserResponse(user);
-      console.log('Mapped user:', userResponse); // Debug each mapping
-      return userResponse;
-    }).filter(user => user !== null); // Filter out any null responses
-    
+    // Check DB connection first
+  
+
+    const users = await User.find({}).lean(); // .lean() for faster plain objects
+    console.log("Fetched users count:", users.length); // Debug
+
+    const mappedUsers = users.map(user => ({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone:user.phone,
+      password:user.password
+
+      // Add other fields you need
+    }));
+
     res.json({
       success: true,
       count: mappedUsers.length,
-      message:'User fetched successfully !!',
       users: mappedUsers,
     });
   } catch (error) {
-    console.error("Get all users error:", error);
+    console.error("Get all users error:", error.message);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch users",
+      error: "Failed to fetch users: " + error.message,
     });
   }
 };
