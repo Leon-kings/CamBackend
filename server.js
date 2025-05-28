@@ -9,8 +9,9 @@ const newsletterRoutes = require('./routes/newsletterRoutes');
 const testimonialRoutes = require('./routes/testimonialRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 
+// Load environment variables
 dotenv.config();
-require("dotenv").config();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -20,27 +21,57 @@ app.use(express.urlencoded({ extended: false }));
 app.use(morgan("dev"));
 app.use(cors());
 
-// Database connection
-mongoose
-  .connect(process.env.DB)
-  .then(() => console.log("Database connected"))
-  .catch((err) => console.log(err));
+// Improved MongoDB connection with timeout settings
+mongoose.connect(process.env.DB, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000, // Fail fast if no primary server is available
+  socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+  connectTimeoutMS: 10000, // Initial connection timeout
+})
+.then(() => console.log("✅ Database connected successfully"))
+.catch((err) => {
+  console.error("❌ Database connection error:", err.message);
+  process.exit(1); // Exit if DB connection fails
+});
+
+// Connection events for better debugging
+mongoose.connection.on('connecting', () => console.log('🔄 Connecting to MongoDB...'));
+mongoose.connection.on('connected', () => console.log('✅ MongoDB connected!'));
+mongoose.connection.on('error', (err) => console.error('❌ MongoDB connection error:', err));
+mongoose.connection.on('disconnected', () => console.warn('⚠️ MongoDB disconnected'));
 
 // Routes
 app.get("/", (req, res) => {
   res.status(200).json({ status: "success", message: "Welcome to my API" });
 });
 
+// Mount routes
 app.use("/users", authRoutes);
 app.use("/contact", contactRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/testimonials', testimonialRoutes);
-// app.use('/api/testimonials', testimonialRoutes);
 app.use('/api', orderRoutes);
-//
 
-//
-app.listen(PORT, () => console.log(`App started on port ${PORT}`));
+// Error handling middleware (should be after all routes)
+app.use((err, req, res, next) => {
+  console.error('🔥 Server error:', err.stack);
+  res.status(500).json({ 
+    status: "error", 
+    message: "Internal server error" 
+  });
+});
 
-// Exporting the app for testing or other purposes
+// Start server
+const server = app.listen(PORT, () => 
+  console.log(`🚀 Server running on port ${PORT}`)
+);
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+  console.error('💥 Unhandled Rejection:', err.message);
+  server.close(() => process.exit(1));
+});
+
+// Export for testing
 module.exports = app;
