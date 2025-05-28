@@ -790,35 +790,20 @@ const updateStatus = async (req, res) => {
  */
 const getAllUsers = async (req, res) => {
   try {
-    // Check DB connection first
-  
-
-    const users = await User.find({}).lean(); // .lean() for faster plain objects
-    console.log("Fetched users count:", users.length); // Debug
-
-    const mappedUsers = users.map(user => ({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      phone:user.phone,
-      password:user.password
-
-      // Add other fields you need
-    }));
-
-    res.json({
-      success: true,
-      count: mappedUsers.length,
-      users: mappedUsers,
+    const users = await User.find();
+    res.status(200).json({
+      mesage: "success",
+      users,
     });
-  } catch (error) {
-    console.error("Get all users error:", error.message);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch users: " + error.message,
+  } catch (err) {
+    res.status(400).json({
+      status: "failed",
+      message: err.message,
     });
   }
 };
+
+
 /**
  * Get user by ID
  */
