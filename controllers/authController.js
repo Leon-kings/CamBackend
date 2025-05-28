@@ -790,11 +790,20 @@ const updateStatus = async (req, res) => {
  */
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find().lean(); // Add .lean() for plain JS objects
+    console.log('Raw users from DB:', users.length); // Debug log
+    
+    const mappedUsers = users.map((user) => {
+      const userResponse = getUserResponse(user);
+      console.log('Mapped user:', userResponse); // Debug each mapping
+      return userResponse;
+    }).filter(user => user !== null); // Filter out any null responses
+    
     res.json({
       success: true,
-      count: users.length,
-      users: users.map((user) => getUserResponse(user)),
+      count: mappedUsers.length,
+      message:'User fetched successfully !!',
+      users: mappedUsers,
     });
   } catch (error) {
     console.error("Get all users error:", error);
@@ -804,7 +813,6 @@ const getAllUsers = async (req, res) => {
     });
   }
 };
-
 /**
  * Get user by ID
  */
