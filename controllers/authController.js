@@ -790,19 +790,19 @@ const updateStatus = async (req, res) => {
  */
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find().maxTimeMS(30000); // Increase timeout to 30s
     res.status(200).json({
-      mesage: "success",
+      status: "success",
+      results: users.length,
       users,
     });
   } catch (err) {
-    res.status(400).json({
+    res.status(500).json({
       status: "failed",
       message: err.message,
     });
   }
 };
-
 
 /**
  * Get user by ID
