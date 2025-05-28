@@ -31,11 +31,11 @@ app.get("/", (req, res) => {
   res.status(200).json({ status: "success", message: "Welcome to my API" });
 });
 
-app.use("/user", authRoutes);
+app.use("/users", authRoutes);
 app.use("/contact", contactRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/testimonials', testimonialRoutes);
-app.use('/api/testimonials', testimonialRoutes);
+// app.use('/api/testimonials', testimonialRoutes);
 app.use('/api', orderRoutes);
 //
 

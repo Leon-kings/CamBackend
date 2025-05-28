@@ -790,7 +790,7 @@ const updateStatus = async (req, res) => {
  */
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const users = await User.find();
     res.json({
       success: true,
       count: users.length,
