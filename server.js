@@ -31,7 +31,7 @@ mongoose.connect(process.env.DB, {
 })
 .then(() => console.log("✅ Database connected successfully"))
 .catch((err) => {
-  console.error("❌ Database connection error:", err.message);
+  console.log("❌ Database connection error:", err.message);
   process.exit(1); // Exit if DB connection fails
 });
 
