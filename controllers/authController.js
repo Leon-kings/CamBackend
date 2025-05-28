@@ -554,6 +554,7 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Validate input
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -561,7 +562,8 @@ const login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    // Find user (case-insensitive)
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -569,13 +571,7 @@ const login = async (req, res) => {
       });
     }
 
-    // Check account status
-    if (user.status !== "active") {
-      return res.status(403).json({
-        success: false,
-        error: `Account is ${user.status}. Please contact support.`,
-      });
-    }
+ 
 
     // Verify password
     const isMatch = await user.comparePassword(password);
@@ -587,28 +583,76 @@ const login = async (req, res) => {
     }
 
     // Generate token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not configured");
+    }
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
-    res.json({
+    // Respond with token (exclude password)
+    user.password = undefined;
+    res.status(200).json({
       success: true,
       token,
+      user,
       message: "Login successful",
-      user: getUserResponse(user),
     });
+
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({
       success: false,
-      error: "Login failed. Please try again.",
+      error: error.message || "Login failed",
+    });
+  }
+};
+/**
+ * Verify email with token
+ */
+const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    // Prevent password updates via this route
+    // if (updates.password) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: 'Use /auth/change-password to update password'
+    //   });
+    // }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select('-password -__v');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user
+    });
+  } catch (err) {
+    console.error('Error updating user:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Server error: ' + err.message
     });
   }
 };
 
-/**
- * Verify email with token
- */
+
+
 const verifyEmail = async (req, res) => {
   try {
     const { token } = req.params;
@@ -964,6 +1008,7 @@ module.exports = {
   resetPassword,
   updateStatus,
   getAllUsers,
+  updateUser,
   getUserById,
   deleteUser,
   getProfile,

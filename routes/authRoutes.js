@@ -11,6 +11,7 @@ const {
   updateStatus,
   getAllUsers,
   getUserById,
+  updateUser,
   deleteUser,
   getProfile,
   getStatistics,
@@ -31,6 +32,7 @@ router.get('/profile',  getProfile);
 // Admin Routes (require admin privileges)
 router.get('/', getAllUsers);
 router.get('/:id', getUserById);
+router.put('/:id',updateUser)
 router.delete('/:id', deleteUser);
 router.put('/:id/status', updateStatus);
 
