@@ -55,7 +55,7 @@ app.use('/api', orderRoutes);
 
 // Error handling middleware (should be after all routes)
 app.use((err, req, res, next) => {
-  console.error('🔥 Server error:', err.stack);
+  console.log('🔥 Server error:', err.stack);
   res.status(500).json({ 
     status: "error", 
     message: "Internal server error" 
@@ -69,7 +69,7 @@ const server = app.listen(PORT, () =>
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  console.error('💥 Unhandled Rejection:', err.message);
+  console.log('💥 Unhandled Rejection:', err.message);
   server.close(() => process.exit(1));
 });
 
