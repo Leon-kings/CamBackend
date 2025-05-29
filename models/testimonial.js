@@ -36,6 +36,13 @@ const testimonialSchema = new mongoose.Schema({
     trim: true,
     minlength: [20, "Testimonial must be at least 20 characters long"],
   },
+  image: {
+    public_id: String,
+    url: String,
+    format: String,
+    width: Number,
+    height: Number,
+  },
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],

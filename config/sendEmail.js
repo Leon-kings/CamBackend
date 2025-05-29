@@ -686,61 +686,6 @@ const sendAdminTestimonialNotification = async (testimonialData) => {
   }
 };
 
-// Testimonial Approval Notification
-const sendTestimonialApprovalEmail = async (email, name, comments = '') => {
-  try {
-    const mailOptions = {
-      from: `"${process.env.APP_NAME || 'Testimonial Team'}" <${process.env.EMAIL_USER || config.email.user}>`,
-      to: email,
-      subject: 'Your Testimonial Has Been Approved!',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #2563eb;">Hi ${name},</h2>
-          <p>We're happy to inform you that your testimonial has been approved and is now visible on our website!</p>
-          ${comments ? `<p><strong>Reviewer's Note:</strong> ${comments}</p>` : ''}
-          <p>Thank you again for sharing your experience with us.</p>
-          <br>
-          <p>Best regards,</p>
-          <p>The ${process.env.APP_NAME || 'Testimonial'} Team</p>
-        </div>
-      `
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log(`Testimonial approval notification sent to ${email}`);
-  } catch (error) {
-    console.error('Error sending testimonial approval email:', error);
-    throw new Error('Failed to send testimonial approval email');
-  }
-};
-
-// Testimonial Rejection Notification
-const sendTestimonialRejectionEmail = async (email, name, comments) => {
-  try {
-    const mailOptions = {
-      from: `"${process.env.APP_NAME || 'Testimonial Team'}" <${process.env.EMAIL_USER || config.email.user}>`,
-      to: email,
-      subject: 'About Your Testimonial Submission',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #2563eb;">Hi ${name},</h2>
-          <p>After careful consideration, we've decided not to publish your testimonial at this time.</p>
-          <p><strong>Feedback:</strong> ${comments || 'Does not meet our current guidelines'}</p>
-          <p>We truly appreciate you taking the time to share your thoughts with us.</p>
-          <br>
-          <p>Best regards,</p>
-          <p>The ${process.env.APP_NAME || 'Testimonial'} Team</p>
-        </div>
-      `
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log(`Testimonial rejection notification sent to ${email}`);
-  } catch (error) {
-    console.error('Error sending testimonial rejection email:', error);
-    throw new Error('Failed to send testimonial rejection email');
-  }
-};
 
 // Monthly Testimonial Report Email
 const sendMonthlyTestimonialReport = async (reportData) => {
@@ -960,8 +905,6 @@ module.exports = {
   sendAdminStatsReportEmail,
   sendTestimonialSubmissionEmail,
   sendAdminTestimonialNotification,
-  sendTestimonialApprovalEmail,
-  sendTestimonialRejectionEmail,
   sendMonthlyTestimonialReport,
   // Order-related functions
   sendOrderConfirmation,
