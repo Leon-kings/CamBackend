@@ -13,7 +13,6 @@ exports.submitContactForm = async (req, res) => {
       name,
       email,
       phone,
-     
       service,
       message
     });
@@ -23,7 +22,6 @@ exports.submitContactForm = async (req, res) => {
       name,
       email,
       phone,
-     
       service,
       message
     });

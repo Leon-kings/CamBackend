@@ -2,35 +2,51 @@ const Testimonial = require("../models/testimonial");
 const {
   sendTestimonialSubmissionEmail,
   sendAdminTestimonialNotification,
-  sendMonthlyStatsReportEmail,
+  sendMonthlyTestimonialReport,
 } = require("../config/sendEmail");
+const uploadToCloudinary = require("../config/cloudinary");
 
 // CREATE - Submit new testimonial
+
 exports.submitTestimonial = async (req, res) => {
   try {
-    const { name, email, profession, rating, testimonial } = req.body;
+    const testimonial = req.body.testimonial;
+    const name = req.body.name;
+    const email = req.body.email;
+    const profession = req.body.profession;
+    const rating = req.body.rating;
 
-    // 1. Check for existing testimonial from this email
+    let imageData = null;
+
+    // Handle image upload if exists
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.path);
+      if (result) {
+        const imageData = result.public_id;
+        console.log("Posted successfully !!");
+      }
+    }
+
+    // Check for existing testimonial
     const existingTestimonial = await Testimonial.findOne({ email });
 
     if (existingTestimonial) {
-      // 2. If exists, revoke/update the existing testimonial
+      // Update existing testimonial
       existingTestimonial.name = name;
       existingTestimonial.profession = profession;
       existingTestimonial.rating = rating;
       existingTestimonial.testimonial = testimonial;
-      existingTestimonial.status = "pending"; // Reset status to pending
+      existingTestimonial.status = "pending";
       existingTestimonial.updatedAt = new Date();
+
+      if (imageData) {
+        existingTestimonial.image = imageData;
+      }
 
       await existingTestimonial.save();
 
-      // 3. Send emails
+      // Send emails
       await sendTestimonialSubmissionEmail(email, name);
-      await sendMonthlyStatsReportEmail({
-        totalSubmissions,
-        averageRating,
-      });
-
       await sendAdminTestimonialNotification({
         name,
         email,
@@ -38,6 +54,7 @@ exports.submitTestimonial = async (req, res) => {
         rating,
         testimonial,
         testimonialId: existingTestimonial._id,
+        image: existingTestimonial.image,
       });
 
       return res.status(200).json({
@@ -47,19 +64,20 @@ exports.submitTestimonial = async (req, res) => {
       });
     }
 
-    // 4. If no existing testimonial, create a new one
+    // Create new testimonial
     const newTestimonial = new Testimonial({
       name,
       email,
       profession,
       rating,
       testimonial,
-      status: "pending", // Default status
+      image: imageData,
+      status: "pending",
     });
 
     await newTestimonial.save();
 
-    // 5. Send emails
+    // Send emails
     await sendTestimonialSubmissionEmail(email, name);
     await sendAdminTestimonialNotification({
       name,
@@ -68,6 +86,7 @@ exports.submitTestimonial = async (req, res) => {
       rating,
       testimonial,
       testimonialId: newTestimonial._id,
+      image: newTestimonial.image,
     });
 
     res.status(201).json({
@@ -288,7 +307,7 @@ exports.generateMonthlyReport = async (req, res) => {
     };
 
     // Send email report
-    await sendMonthlyStatsReportEmail(reportData);
+    await sendMonthlyTestimonialReport(reportData);
 
     res.status(200).json({
       success: true,

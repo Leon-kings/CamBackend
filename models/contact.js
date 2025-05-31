@@ -12,9 +12,6 @@ const contactSchema = new mongoose.Schema({
   phone: {
     type: String
   },
-  // company: {
-  //   type: String
-  // },
   service: {
     type: String
   },
