@@ -903,11 +903,8 @@ const deleteUser = async (req, res) => {
  */
 const getStatistics = async (req, res) => {
   try {
-    // Basic counts
+    // Total users count
     const totalUsers = await User.countDocuments();
-    const verifiedUsers = await User.countDocuments({ verified: true });
-    const activeUsers = await User.countDocuments({ status: 'active' });
-    const suspendedUsers = await User.countDocuments({ status: 'suspended' });
     
     // Time-based counts
     const newUsersLast24h = await User.countDocuments({
@@ -917,9 +914,6 @@ const getStatistics = async (req, res) => {
       createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
     });
     
-    // Verification rate
-    const verificationRate = totalUsers > 0 ? (verifiedUsers / totalUsers * 100).toFixed(2) : 0;
-
     // User growth data (last 30 days)
     const growthData = [];
     for (let i = 29; i >= 0; i--) {
@@ -943,33 +937,27 @@ const getStatistics = async (req, res) => {
       });
     }
 
-    // Prepare response
-    const statistics = {
-      users: {
-        total: totalUsers,
-        verified: verifiedUsers,
-        active: activeUsers,
-        suspended: suspendedUsers,
-        verificationRate: `${verificationRate}%`,
-        newUsers: {
-          last24h: newUsersLast24h,
-          last7d: newUsersLast7d
-        }
+    // Prepare simplified response
+    const report = {
+      totalUsers,
+      newUsers: {
+        last24h: newUsersLast24h,
+        last7d: newUsersLast7d
       },
-      growth: growthData,
+      growthData,
       reportGeneratedAt: new Date().toISOString()
     };
 
     res.json({
       success: true,
-      statistics
+      report
     });
 
   } catch (error) {
-    console.error('Statistics error:', error);
+    console.error('Report generation error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to generate statistics report'
+      error: 'Failed to generate user report'
     });
   }
 };
