@@ -8,7 +8,8 @@ const contactRoutes = require('./routes/contactRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes');
 const testimonialRoutes = require('./routes/testimonialRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-const messageRoutes = require('./routes/messageRoutes')
+const messageRoutes = require('./routes/messageRoutes');
+const viewCountRoutes = require('./routes/viewCountRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -54,6 +55,7 @@ app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/contact/messaging', messageRoutes);
 app.use('/api', orderRoutes);
+app.use('/view/count', viewCountRoutes);
 
 // Error handling middleware (should be after all routes)
 app.use((err, req, res, next) => {
