@@ -103,7 +103,55 @@ exports.submitTestimonial = async (req, res) => {
     });
   }
 };
+// Add this new route handler for status changes
+exports.updateTestimonialStatus = async (req, res) => {
+  try {
+    const { testimonialId } = req.params;
+    const { status } = req.body;
 
+    // Validate status
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status value. Must be 'pending', 'approved'",
+      });
+    }
+
+    const updatedTestimonial = await Testimonial.findByIdAndUpdate(
+      testimonialId,
+      { 
+        status,
+        updatedAt: new Date(),
+        // Optionally add reviewedBy if you want to track who made the change
+        // reviewedBy: req.user._id 
+      },
+      { new: true }
+    );
+
+    if (!updatedTestimonial) {
+      return res.status(404).json({
+        success: false,
+        message: "Testimonial not found",
+      });
+    }
+
+    // Optionally send email notification to user about status change
+    // await sendStatusChangeEmail(updatedTestimonial.email, updatedTestimonial.name, status);
+
+    res.status(200).json({
+      success: true,
+      message: `Testimonial status updated to ${status}`,
+      data: updatedTestimonial,
+    });
+  } catch (error) {
+    console.error("Status update error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update testimonial status",
+      error: error.message,
+    });
+  }
+};
 // READ - Get all testimonials (with filters)
 exports.getAllTestimonials = async (req, res) => {
   try {

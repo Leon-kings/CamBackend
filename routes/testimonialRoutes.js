@@ -21,10 +21,6 @@ router.get('/', testimonialController.getAllTestimonials);
 router.put('/:id',testimonialController.updateTestimonial);
 router.get('/:id', testimonialController.getTestimonialById);
 router.delete('/:id',testimonialController.deleteTestimonial);
-
-// Admin routes (protected)
-// router.use(authenticate, authorize('admin'));
-// router.get('/admin', testimonialController.getAllTestimonialsForAdmin);
-// router.patch('/:id/status', testimonialController.updateTestimonialStatus);
+router.put('/status/:id', testimonialController.updateTestimonialStatus);
 
 module.exports = router;
