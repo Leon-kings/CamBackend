@@ -1,12 +1,18 @@
 const express = require('express');
-const searchController = require('../controllers/searchController');
-const errorHandler = require('../middlewares/errorHandler');
-
 const router = express.Router();
+const searchController = require('../controllers/searchController');
 
-// Search endpoints
-router.get('/', errorHandler(searchController.globalSearch));
-router.get('/advanced', errorHandler(searchController.advancedSearch));
-router.get('/stats', errorHandler(searchController.getSearchStats));
+
+// Basic search
+router.get('/', searchController.basicSearch);
+
+// Advanced search
+router.get('/advanced', searchController.advancedSearch);
+
+// Search suggestions (autocomplete)
+router.get('/suggestions', searchController.getSearchSuggestions);
+
+// Search analytics (protected route)
+router.get('/analytics', searchController.getSearchAnalytics);
 
 module.exports = router;

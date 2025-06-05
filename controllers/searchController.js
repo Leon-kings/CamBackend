@@ -1,105 +1,169 @@
-const Item = require('../models/itemModel');
-const Project = require('../models/projectModel');
-const { NotFoundError, BadRequestError } = require('../utils/errors');
+const Product = require('../models/product');
+const SearchLog = require('../models/SearchLog');
+const mongoose = require('mongoose');
 
-// Full-text search across all models
-exports.globalSearch = async (req, res, next) => {
+exports.basicSearch = async (req, res) => {
   try {
-    const { query } = req.query;
+    const { q } = req.query;
     
-    if (!query || query.length < 3) {
-      throw new BadRequestError('Search query must be at least 3 characters long');
+    if (!q) {
+      return res.status(400).json({ error: 'Search term is required' });
     }
-
-    // Search items
-    const items = await Item.find(
-      { $text: { $search: query } },
-      { score: { $meta: 'textScore' } }
-    ).sort({ score: { $meta: 'textScore' } }).limit(10);
-
-    // Search projects
-    const projects = await Project.find(
-      { $text: { $search: query } },
-      { score: { $meta: 'textScore' } }
-    ).sort({ score: { $meta: 'textScore' } }).limit(10);
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        items,
-        projects
+    
+    // Basic search
+    const { results, total } = await Product.search(q, {}, { limit: 20 });
+    
+    // Get statistics
+    const stats = await Product.getSearchStats(q);
+    const searchFrequency = await SearchLog.getSearchFrequency(q);
+    
+    // Log the search
+    await SearchLog.logSearch(
+      q,
+      req.user?._id,
+      req.ip,
+      {},
+      total
+    );
+    
+    res.json({
+      results,
+      statistics: {
+        ...stats,
+        searchFrequency
       }
     });
+    
   } catch (err) {
-    next(err);
+    console.error('Search error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-// Advanced search with filters
-exports.advancedSearch = async (req, res, next) => {
+exports.advancedSearch = async (req, res) => {
   try {
-    const { q, type, status, fromDate, toDate } = req.query;
-    const searchQuery = {};
-
-    // Text search
-    if (q && q.length >= 3) {
-      searchQuery.$text = { $search: q };
+    const { q, category, minPrice, maxPrice, page = 1, limit = 15 } = req.query;
+    
+    const filters = {};
+    if (category && mongoose.isValidObjectId(category)) filters.category = category;
+    if (minPrice) filters.minPrice = minPrice;
+    if (maxPrice) filters.maxPrice = maxPrice;
+    
+    const searchTerm = q || '';
+    
+    // Perform search
+    const { results, total, totalPages } = await Product.search(
+      searchTerm,
+      filters,
+      { page, limit }
+    );
+    
+    // Get statistics if there's a search term
+    let stats = null;
+    if (searchTerm) {
+      const productStats = await Product.getSearchStats(searchTerm);
+      const searchFrequency = await SearchLog.getSearchFrequency(searchTerm);
+      
+      stats = {
+        ...productStats,
+        searchFrequency
+      };
+      
+      // Log the search
+      await SearchLog.logSearch(
+        searchTerm,
+        req.user?._id,
+        req.ip,
+        filters,
+        total
+      );
     }
-
-    // Type filter (item or project)
-    let Model;
-    if (type === 'project') {
-      Model = Project;
-    } else {
-      Model = Item; // default to item search
-    }
-
-    // Status filter
-    if (status) {
-      searchQuery.status = status;
-    }
-
-    // Date range filter
-    if (fromDate || toDate) {
-      searchQuery.createdAt = {};
-      if (fromDate) searchQuery.createdAt.$gte = new Date(fromDate);
-      if (toDate) searchQuery.createdAt.$lte = new Date(toDate);
-    }
-
-    const results = await Model.find(searchQuery)
-      .sort({ createdAt: -1 })
-      .limit(20);
-
-    res.status(200).json({
-      status: 'success',
-      results: results.length,
-      data: results
+    
+    res.json({
+      results,
+      total,
+      page: parseInt(page),
+      totalPages,
+      filters,
+      statistics: stats
     });
+    
   } catch (err) {
-    next(err);
+    console.error('Advanced search error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-// Get search statistics
-exports.getSearchStats = async (req, res, next) => {
+exports.getSearchSuggestions = async (req, res) => {
   try {
-    const [itemStats, projectStats] = await Promise.all([
-      Item.aggregate([
-        { $group: { _id: null, count: { $sum: 1 } } }
-      ]),
-      Project.aggregate([
-        { $group: { _id: null, count: { $sum: 1 } } }
-      ])
+    const { q, limit = 5 } = req.query;
+    
+    if (!q || q.length < 2) {
+      return res.json({ suggestions: [] });
+    }
+    
+    const suggestions = await Product.aggregate([
+      {
+        $match: {
+          $or: [
+            { name: new RegExp(q, 'i') },
+            { sku: new RegExp(q, 'i') }
+          ]
+        }
+      },
+      { $limit: parseInt(limit) },
+      { $project: { name: 1, sku: 1, _id: 1 } }
     ]);
+    
+    res.json({ suggestions });
+  } catch (err) {
+    console.error('Suggestions error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
-    res.status(200).json({
-      status: 'success',
-      data: {
-        totalItems: itemStats[0]?.count || 0,
-        totalProjects: projectStats[0]?.count || 0
-      }
+exports.getSearchAnalytics = async (req, res) => {
+  try {
+    // Most popular searches
+    const popularSearches = await SearchLog.aggregate([
+      {
+        $group: {
+          _id: '$term',
+          count: { $sum: 1 },
+          lastSearched: { $max: '$createdAt' }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+    
+    // Search trends (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const searchTrends = await SearchLog.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: thirtyDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    res.json({
+      popularSearches,
+      searchTrends
     });
   } catch (err) {
-    next(err);
+    console.error('Analytics error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
