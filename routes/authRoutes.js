@@ -34,7 +34,7 @@ router.get('/', getAllUsers);
 router.get('/:id', getUserById);
 router.put('/:id',updateUser)
 router.delete('/:id', deleteUser);
-router.put('/:id/status', updateStatus);
+router.put('/status/:id', updateStatus);
 
 // Statistics Routes (admin only)
 router.get('/statistics/system', getStatistics);

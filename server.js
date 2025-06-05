@@ -10,6 +10,9 @@ const testimonialRoutes = require('./routes/testimonialRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const viewCountRoutes = require('./routes/viewCountRoutes');
+// Add to your existing app.js
+// const searchRoutes = require('./routes/searchRoutes');
+
 
 // Load environment variables
 dotenv.config();
@@ -56,6 +59,8 @@ app.use('/api/testimonials', testimonialRoutes);
 app.use('/contact/messaging', messageRoutes);
 app.use('/api', orderRoutes);
 app.use('/view/count', viewCountRoutes);
+// After other middleware
+// app.use('/api/search', searchRoutes);
 
 // Error handling middleware (should be after all routes)
 app.use((err, req, res, next) => {
